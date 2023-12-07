@@ -11,36 +11,32 @@ class CompWebP {
         console.log(typeof this.imageData);
         let processedData = this.preprocessImage(this.imageData);
 
-        // Étape 2: Compression avec Perte (VP8) ou sans Perte
         let compressedData;
-        if (this.avecPerte(80,{width:processedData.width,height:processedData.height})) {
+        if (this.avecPerte(80, { width: processedData.width, height: processedData.height })) {
             compressedData = this.compressLossy(processedData);
         } else {
             compressedData = this.compressLossless(processedData);
         }
 
-        // Étape 3: Post-traitement
-        // Encapsuler les données compressées dans un format de fichier WebP
         return this.wrapInWebPFormat(compressedData);
     }
 
     preprocessImage(image) {
-        if (!(image instanceof  ImageData)){
-            throw new Error(('Invalid'))
+        if (!(image instanceof ImageData)) {
+            throw new Error("Invalid image data");
         }
         var data = image.data;
         var width = image.width;
         var height = image.height;
-        var lenght=image.length;
-        for(var i = 0;i<lenght;i+=4){
-            var gris = 0.3*data[i]+0.6*data[i+1]+0.1*data[i+2]
-            data[i]=gris;
-            data[i+1]=gris;
-            data[i+2]=gris;
+        var length = width * height * 4;
+        for (var i = 0; i < length; i += 4) {
+            var gris = 0.3 * data[i] + 0.6 * data[i + 1] + 0.1 * data[i + 2];
+            data[i] = gris;    // Rouge
+            data[i + 1] = gris; // Vert
+            data[i + 2] = gris; // Bleu
+            // Alpha inchangé: data[i + 3]
         }
-        var nvData=new ImageData(new Uint8ClampedArray(data),width,height)
-
-        return nvData;
+        return new ImageData(new Uint8ClampedArray(data), width, height);
     }
 
     avecPerte(qualite,resolution) {//Vérifie si on autorise une perte
@@ -213,16 +209,9 @@ class CompWebP {
 
 
     compressLossless(imageData) {
-        // Convertir les données de l'image en un format approprié pour la compression
         let processedData = this.preprocessForLosslessCompression(imageData);
-
-        // Appliquer la prédiction de pixels
         let predictedData = this.applyPixelPrediction(processedData);
-
-        // Appliquer la transformation des couleurs
         let transformedData = this.applyColorTransformation(predictedData);
-
-        // Appliquer le codage entropique
         let compressedData = this.applyEntropyCoding(transformedData);
 
         return compressedData;
@@ -304,37 +293,9 @@ class CompWebP {
 
         return new ImageData(predictedData, width, height);
     }
-    predictPixels(imageData) {
-        // imageData est supposé être un tableau 2D représentant les pixels de l'image
-        // Chaque élément du tableau est un objet pixel avec des propriétés de couleur (rouge, vert, bleu)
 
-        let width = imageData[0].length;
-        let height = imageData.length;
 
-        // Créer un nouveau tableau pour stocker les valeurs prédites
-        let predictedData = new Array(height);
 
-        for (let y = 0; y < height; y++) {
-            predictedData[y] = new Array(width);
-            for (let x = 0; x < width; x++) {
-                // Utiliser un algorithme simple de prédiction, comme prédire chaque pixel
-                // comme étant identique au pixel précédent dans la même ligne
-                if (x == 0) {
-                    predictedData[y][x] = imageData[y][x]; // Aucune prédiction possible pour le premier pixel de chaque ligne
-                } else {
-                    predictedData[y][x] = this.predictPixel(imageData, x, y);
-                }
-            }
-        }
-
-        return predictedData;
-    }
-
-    predictPixel(imageData, x, y) {
-        // Exemple de prédiction: prédire le pixel actuel comme étant identique au pixel précédent
-        // C'est une simplification. Les algorithmes réels peuvent utiliser des techniques plus complexes
-        return imageData[y][x - 1];
-    }
 
     transformColors(imageData) {
         // imageData est supposé être un tableau 2D représentant les pixels de l'image
@@ -365,17 +326,17 @@ class CompWebP {
             blue: pixel.blue - (pixel.green / 2) // Exemple de transformation
         };
 
+
         return transformedPixel;
     }
     applyEntropyCoding(imageData) {
-        // Supposons que imageData est un objet ImageData ou un format similaire.
-        // Cette méthode doit être adaptée en fonction de la structure réelle des données de votre image.
-        let width = imageData.width;
-        let height = imageData.height;
+        if (!imageData || !imageData.data) {
+            throw new Error("Invalid imageData or imageData.data is undefined");
+        }
+
         let data = imageData.data;
         let encodedData = [];
 
-        // Simplification: Utiliser un codage RLE (Run-Length Encoding) de base comme exemple
         for (let i = 0; i < data.length; i++) {
             let runLength = 1;
             while (i + 1 < data.length && data[i] === data[i + 1]) {
@@ -385,42 +346,8 @@ class CompWebP {
             encodedData.push({value: data[i], count: runLength});
         }
 
-        // Convertir en format de stockage ou de transmission approprié
-        // Par exemple, enregistrer sous forme de chaîne de caractères ou de tableau d'octets
         let encodedString = encodedData.map(item => `${item.value}:${item.count}`).join(',');
-
         return encodedString;
-    }
-
-
-    entropyEncode(imageData) {
-        // Dans un scénario réel, cette méthode implémenterait un algorithme de codage entropique comme Huffman ou arithmétique.
-        // L'exemple suivant est une simplification et ne représente pas une véritable compression.
-
-        // Convertir les données d'image en une chaîne de symboles (pour l'exemple)
-        let symbols = this.convertToSymbols(imageData);
-
-        // Appliquer un codage simplifié (ceci est un placeholder et ne fait pas de réel codage entropique)
-        let encodedData = this.simpleEncode(symbols);
-
-        return encodedData;
-    }
-
-    convertToSymbols(imageData) {
-        // Convertir les données d'image en une série de symboles (par exemple, en chaîne de caractères)
-        // Ceci est un exemple simplifié.
-        return imageData.map(row => row.map(pixel => `${pixel.red},${pixel.green},${pixel.blue}`).join(' ')).join('\n');
-    }
-
-    simpleEncode(symbols) {
-        // Appliquer un "codage" simplifié (ceci est juste un exemple et ne fait pas de véritable codage entropique)
-        // Par exemple, compter simplement le nombre d'occurrences de chaque symbole (ceci ne réduit pas la taille, c'est juste pour l'exemple)
-        let counts = {};
-        symbols.split(/\s|\n/).forEach(symbol => {
-            counts[symbol] = (counts[symbol] || 0) + 1;
-        });
-
-        return JSON.stringify(counts); // Convertir le dictionnaire de comptage en chaîne de caractères pour l'exemple
     }
 
      wrapInWebPFormat() {
