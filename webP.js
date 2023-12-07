@@ -41,8 +41,8 @@ class CompWebP {
         return nvData;
     }
 
-    avecPerte(qualité,résolution) {
-        if qualité<80 && (résolution.width>1920) || (résolution.height>1080){
+    avecPerte(qualité,résolution) {//Vérifie si on autorise une perte
+        if (qualité<80 && (résolution.width>1920) || (résolution.height>1080)){//On fait avec perte si la qualité est de 80 et l'image a une résolution 1920x1080
             return true;
         }
         else{
