@@ -1,4 +1,4 @@
-class WebPCompressor {
+class CompWebP {
     constructor(imageData) {
         this.imageData = imageData; // imageData est un objet contenant les données de l'image
         this.isLossy = isLossy; // true pour VP8, false pour VP8L
@@ -22,10 +22,23 @@ class WebPCompressor {
         return this.wrapInWebPFormat(compressedData);
     }
 
-    preprocessImage(imageData) {
-        // Implémenter la conversion en format YUV ou un autre format approprié
-        // ...
-        return processedData;
+    preprocessImage(image) {
+        if (!(image instanceof  ImageData)){
+            throw new Error(('Invalid'))
+        }
+        var data = image.data;
+        var width = image.width;
+        var height = image.height;
+        var lenght=image.length;
+        for(var i = 0;i<lenght;i+=4){
+            var gris = 0.3*data[i]+0.6*data[i+1]+0.1*data[i+2]
+            data[i]=gris;
+            data[i+1]=gris;
+            data[i+2]=gris;
+        }
+        var nvData=new ImageData(new Uint8ClampedArray(data),width,height)
+
+        return nvData;
     }
 
     shouldUseLossyCompression() {
