@@ -48,10 +48,164 @@ class CompWebP {
     }
 
     compressLossy(imageData) {
-        // Implémenter la compression avec perte en utilisant des techniques de VP8
-        // ...
-        return compressedData;
+        // imageData est supposé être un tableau 2D représentant les pixels de l'image
+        // Dans une implémentation réelle, cette méthode appliquerait des techniques de compression avec perte basées sur VP8
+
+        // Étape 1: Transformation (comme la transformation DCT)
+        let transformedData = this.applyDCT(imageData);
+
+        // Étape 2: Quantification
+        let quantizedData = this.quantize(transformedData);
+
+        // Étape 3: Codage (comme le codage VP8)
+        let encodedData = this.encodeVP8(quantizedData);
+
+        return encodedData;
     }
+
+    applyDCT(imageData) {
+        // Cette implémentation est une version très simplifiée et ne reflète pas une DCT complète et optimisée
+        let blockSize = 8; // Taille standard d'un bloc pour DCT en JPEG
+        let width = imageData[0].length;
+        let height = imageData.length;
+        let transformedData = [];
+
+        for (let y = 0; y < height; y += blockSize) {
+            for (let x = 0; x < width; x += blockSize) {
+                // Appliquer la DCT sur chaque bloc de l'image
+                let block = this.extractBlock(imageData, x, y, blockSize);
+                let dctBlock = this.dctTransform(block);
+                transformedData.push(dctBlock);
+            }
+        }
+
+        return transformedData;
+    }
+    extractBlock(imageData, x, y, blockSize) {
+        // Extraire un bloc de données de l'image
+        let block = [];
+        for (let i = y; i < y + blockSize; i++) {
+            for (let j = x; j < x + blockSize; j++) {
+                block.push(imageData[i][j]);
+            }
+        }
+        return block;
+    }
+
+     dctTransform(block) {
+        let N = block.length;
+        let M = block[0].length;
+        let transformedBlock = new Array(N);
+
+        for (let u = 0; u < N; u++) {
+            transformedBlock[u] = new Array(M).fill(0);
+            for (let v = 0; v < M; v++) {
+                let sum = 0;
+                for (let i = 0; i < N; i++) {
+                    for (let j = 0; j < M; j++) {
+                        let pixel = block[i][j];
+                        sum += pixel * Math.cos(((2 * i + 1) * u * Math.PI) / (2 * N)) * Math.cos(((2 * j + 1) * v * Math.PI) / (2 * M));
+                    }
+                }
+                sum *= ((u === 0) ? 1 / Math.sqrt(N) : Math.sqrt(2) / Math.sqrt(N)) * ((v === 0) ? 1 / Math.sqrt(M) : Math.sqrt(2) / Math.sqrt(M));
+                transformedBlock[u][v] = sum;
+            }
+        }
+
+        return transformedBlock;
+    }
+
+     quantize(transformedData) {
+        let quantizationMatrix = [
+            [16, 11, 10, 16, 24, 40, 51, 61],
+            [12, 12, 14, 19, 26, 58, 60, 55],
+            [14, 13, 16, 24, 40, 57, 69, 56],
+            [14, 17, 22, 29, 51, 87, 80, 62],
+            [18, 22, 37, 56, 68, 109, 103, 77],
+            [24, 35, 55, 64, 81, 104, 113, 92],
+            [49, 64, 78, 87, 103, 121, 120, 101],
+            [72, 92, 95, 98, 112, 100, 103, 99]
+        ];
+
+        let blockSize = 8;
+        let width = transformedData[0].length;
+        let height = transformedData.length;
+        let quantizedData = [];
+
+        for (let i = 0; i < height; i += blockSize) {
+            for (let j = 0; j < width; j += blockSize) {
+                let block = this.extractBlock(transformedData, j, i, blockSize);
+                let quantizedBlock = this.quantizeBlock(block, quantizationMatrix);
+                quantizedData.push(quantizedBlock);
+            }
+        }
+
+        return quantizedData;
+    }
+
+    quantizeBlock(block, quantizationMatrix) {
+        let blockSize = block.length;
+        let quantizedBlock = new Array(blockSize);
+
+        for (let i = 0; i < blockSize; i++) {
+            quantizedBlock[i] = new Array(blockSize);
+            for (let j = 0; j < blockSize; j++) {
+                // Appliquer la quantification en divisant chaque coefficient par l'élément correspondant dans la matrice de quantification
+                quantizedBlock[i][j] = Math.round(block[i][j] / quantizationMatrix[i][j]);
+            }
+        }
+
+        return quantizedBlock;
+    }
+
+    extractBlock(transformedData, x, y, blockSize) {
+        // Cette fonction extrait un bloc spécifique des données transformées
+        let block = [];
+        for (let i = y; i < y + blockSize; i++) {
+            for (let j = x; j < x + blockSize; j++) {
+                block.push(transformedData[i][j]);
+            }
+        }
+        return block;
+    }
+
+
+     encodeVP8(quantizedData) {
+        // Ceci est une version simplifiée et ne reflète pas un véritable codage VP8
+        // Dans un vrai scénario, cette fonction appliquerait des techniques de codage avancées, y compris la prédiction de mouvement, la transformation, la quantification et le codage entropique.
+
+        let encodedData = [];
+
+        // Parcourir les données quantifiées et appliquer une forme simplifiée de codage
+        for (let i = 0; i < quantizedData.length; i++) {
+            for (let j = 0; j < quantizedData[i].length; j++) {
+                // Ici, on pourrait appliquer des techniques de codage de base, comme un codage RLE simplifié (Run-Length Encoding) ou un autre codage entropique basique.
+                let encodedBlock = simpleEntropyEncode(quantizedData[i][j]);
+                encodedData.push(encodedBlock);
+            }
+        }
+
+        return encodedData;
+    }
+
+     simpleEntropyEncode(block) {
+        // Appliquer une forme très simplifiée de codage entropique.
+        // Remarque : Ceci est un placeholder et ne constitue pas un véritable codage entropique efficace.
+        let encodedBlock = '';
+        let currentRun = 1;
+        for (let i = 1; i < block.length; i++) {
+            if (block[i] === block[i - 1]) {
+                currentRun++;
+            } else {
+                encodedBlock += block[i - 1] + ':' + currentRun + ',';
+                currentRun = 1;
+            }
+        }
+        encodedBlock += block[block.length - 1] + ':' + currentRun;
+        return encodedBlock;
+    }
+
+
 
     compressLossless(imageData) {
         // Convertir les données de l'image en un format approprié pour la compression
@@ -204,8 +358,9 @@ class CompWebP {
     }
 
 }
-
+/*
 // Utilisation de l'algorithme
 let myImage = ""; // Charger ou obtenir les données de l'image
 let compressor = new WebPCompressor(myImage);
 let compressedImage = compressor.compress();
+*/
