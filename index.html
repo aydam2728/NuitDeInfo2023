@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Compresseur d'Image WebP</title>
+    <script src="webP.js"></script>
+</head>
+<body>
+
+<h2>Compresseur d'Image WebP</h2>
+
+<input type="file" id="imageInput" accept="image/*">
+<button onclick="compressImage()">Compresser en WebP</button>
+
+<script>
+    function compressImage() {
+        const input = document.getElementById('imageInput');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageData = e.target.result;
+
+                // Créer une instance de votre compresseur WebP
+                const compressor = new WebPCompressor(imageData);
+                const compressedImage = compressor.compress();
+
+                // afficher l'image compressée
+                const image = new Image();
+                image.src = compressedImage;
+                document.body.appendChild(image);
+
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,6 +1,7 @@
 class WebPCompressor {
     constructor(imageData) {
         this.imageData = imageData; // imageData est un objet contenant les données de l'image
+        this.isLossy = isLossy; // true pour VP8, false pour VP8L
     }
 
     compress() {
@@ -45,11 +46,24 @@ class WebPCompressor {
         return compressedData;
     }
 
-    wrapInWebPFormat(compressedData) {
-        // Encapsuler les données dans un format de fichier WebP
-        // ...
-        return webPData;
+     wrapInWebPFormat() {
+        let riffHeader = this.createRIFFHeader();
+        let vpHeader = this.isLossy ? this.createVP8Header() : this.createVP8LHeader();
+        let metaData = this.createMetaData();
+
+        // Calculer la taille totale
+        let totalSize = riffHeader.length + vpHeader.length + this.compressedData.length + metaData.length;
+
+        // Créer le buffer pour le fichier WebP
+        let webPFile = new Uint8Array(totalSize);
+        webPFile.set(riffHeader);
+        webPFile.set(vpHeader, riffHeader.length);
+        webPFile.set(this.compressedData, riffHeader.length + vpHeader.length);
+        webPFile.set(metaData, riffHeader.length + vpHeader.length + this.compressedData.length);
+
+        return webPFile;
     }
+
 }
 
 // Utilisation de l'algorithme
