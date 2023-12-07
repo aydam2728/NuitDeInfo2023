@@ -11,7 +11,7 @@ class CompWebP {
 
         // Étape 2: Compression avec Perte (VP8) ou sans Perte
         let compressedData;
-        if (this.shouldUseLossyCompression()) {
+        if (this.avecPerte(qualite,resolution)) {
             compressedData = this.compressLossy(processedData);
         } else {
             compressedData = this.compressLossless(processedData);
@@ -41,10 +41,13 @@ class CompWebP {
         return nvData;
     }
 
-    shouldUseLossyCompression() {
-        // Déterminer si la compression avec perte est appropriée
-        // ...
-        return true; // ou false selon le cas
+    avecPerte(qualité,résolution) {
+        if qualité<80 && (résolution.width>1920) || (résolution.height>1080){
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 
     compressLossy(imageData) {
