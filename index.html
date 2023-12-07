@@ -15,21 +15,29 @@
     function compressImage() {
         const input = document.getElementById('imageInput');
         if (input.files && input.files[0]) {
+            const file = input.files[0];
             const reader = new FileReader();
+
             reader.onload = function(e) {
-                const imageData = e.target.result;
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
 
-                // Créer une instance de votre compresseur WebP
-                const compressor = new WebPCompressor(imageData);
-                const compressedImage = compressor.compress();
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
 
-                // afficher l'image compressée
-                const image = new Image();
-                image.src = compressedImage;
-                document.body.appendChild(image);
+                    const imageData = ctx.getImageData(0, 0, img.width, img.height);
+                    const compressor = new CompWebP(imageData);
+                    const compressedImage = compressor.compress();
 
+                    // Traiter ici l'image compressée...
+                };
+                img.src = e.target.result;
             };
-            reader.readAsDataURL(input.files[0]);
+
+            reader.readAsDataURL(file);
         }
     }
 </script>

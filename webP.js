@@ -1,17 +1,19 @@
 class CompWebP {
     constructor(imageData) {
         this.imageData = imageData; // imageData est un objet contenant les données de l'image
-        this.isLossy = isLossy; // true pour VP8, false pour VP8L
+        this.isLossy = false; // true pour VP8, false pour VP8L
     }
 
     compress() {
         // Étape 1: Pré-traitement
         // Convertir l'image en un format approprié pour la compression (par exemple, YUV)
+        // print typeof(this.imageData)
+        console.log(typeof this.imageData);
         let processedData = this.preprocessImage(this.imageData);
 
         // Étape 2: Compression avec Perte (VP8) ou sans Perte
         let compressedData;
-        if (this.avecPerte(qualite,resolution)) {
+        if (this.avecPerte(80,{width:processedData.width,height:processedData.height})) {
             compressedData = this.compressLossy(processedData);
         } else {
             compressedData = this.compressLossless(processedData);
@@ -41,8 +43,8 @@ class CompWebP {
         return nvData;
     }
 
-    avecPerte(qualité,résolution) {//Vérifie si on autorise une perte
-        if (qualité<80 && (résolution.width>1920) || (résolution.height>1080)){//On fait avec perte si la qualité est de 80 et l'image a une résolution 1920x1080
+    avecPerte(qualite,resolution) {//Vérifie si on autorise une perte
+        if (qualite<80 && (resolution.width>1920) || (resolution.height>1080)){//On fait avec perte si la qualité est de 80 et l'image a une résolution 1920x1080
             return true;
         }
         else{
@@ -361,9 +363,3 @@ class CompWebP {
     }
 
 }
-/*
-// Utilisation de l'algorithme
-let myImage = ""; // Charger ou obtenir les données de l'image
-let compressor = new WebPCompressor(myImage);
-let compressedImage = compressor.compress();
-*/
