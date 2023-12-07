@@ -228,6 +228,29 @@ class CompWebP {
         return compressedData;
     }
     // Méthodes supplémentaires pour chaque étape de traitement
+    preprocessForLosslessCompression(imageData) {
+        // imageData est supposée être une instance de ImageData ou un format similaire
+        if (!(imageData instanceof ImageData)) {
+            throw new Error("Invalid imageData type");
+        }
+
+        // Exemple de prétraitement : conversion en niveaux de gris
+        // Remarque : Ceci est un exemple simplifié. Vous pouvez choisir de ne pas modifier l'image ou d'appliquer d'autres types de prétraitements.
+        let data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            // Calculer la luminance en niveaux de gris
+            let grey = 0.3 * data[i] + 0.59 * data[i + 1] + 0.11 * data[i + 2];
+
+            // Appliquer la luminance aux canaux de couleur
+            data[i] = grey;     // Rouge
+            data[i + 1] = grey; // Vert
+            data[i + 2] = grey; // Bleu
+            // Alpha reste inchangé
+        }
+
+        // Créer un nouvel objet ImageData à partir des données modifiées
+        return new ImageData(new Uint8ClampedArray(data), imageData.width, imageData.height);
+    }
     adjustColorPalette(imageData) {
         // imageData est supposé être une structure contenant les pixels de l'image
         // Cette fonction devrait ajuster la palette de couleurs de l'image pour une compression efficace
@@ -250,6 +273,37 @@ class CompWebP {
         return Math.floor(colorValue / 10) * 10;
     }
 
+    applyPixelPrediction(imageData) {
+        // Supposons que imageData est un objet ImageData ou un format similaire.
+        // Cette méthode doit être adaptée en fonction de la structure réelle des données de votre image.
+        let width = imageData.width;
+        let height = imageData.height;
+        let data = imageData.data;
+        let predictedData = new Uint8ClampedArray(data.length);
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                let index = (y * width + x) * 4;
+
+                if (x === 0 && y === 0) {
+                    // Le premier pixel ne peut pas être prédit car il n'a pas de voisins précédents.
+                    predictedData.set([data[index], data[index + 1], data[index + 2], data[index + 3]], index);
+                } else {
+                    // Prédire chaque pixel en se basant sur le pixel précédent.
+                    // C'est un exemple très simplifié. Des techniques plus complexes peuvent être utilisées.
+                    let leftIndex = y === 0 ? index : index - 4; // Pixel à gauche
+                    let upIndex = x === 0 ? index : index - width * 4; // Pixel au-dessus
+
+                    for (let i = 0; i < 3; i++) { // Pour les canaux RGB
+                        predictedData[index + i] = data[index + i] - Math.floor((data[leftIndex + i] + data[upIndex + i]) / 2);
+                    }
+                    predictedData[index + 3] = data[index + 3]; // Copier la valeur alpha sans changement
+                }
+            }
+        }
+
+        return new ImageData(predictedData, width, height);
+    }
     predictPixels(imageData) {
         // imageData est supposé être un tableau 2D représentant les pixels de l'image
         // Chaque élément du tableau est un objet pixel avec des propriétés de couleur (rouge, vert, bleu)
@@ -313,6 +367,31 @@ class CompWebP {
 
         return transformedPixel;
     }
+    applyEntropyCoding(imageData) {
+        // Supposons que imageData est un objet ImageData ou un format similaire.
+        // Cette méthode doit être adaptée en fonction de la structure réelle des données de votre image.
+        let width = imageData.width;
+        let height = imageData.height;
+        let data = imageData.data;
+        let encodedData = [];
+
+        // Simplification: Utiliser un codage RLE (Run-Length Encoding) de base comme exemple
+        for (let i = 0; i < data.length; i++) {
+            let runLength = 1;
+            while (i + 1 < data.length && data[i] === data[i + 1]) {
+                runLength++;
+                i++;
+            }
+            encodedData.push({value: data[i], count: runLength});
+        }
+
+        // Convertir en format de stockage ou de transmission approprié
+        // Par exemple, enregistrer sous forme de chaîne de caractères ou de tableau d'octets
+        let encodedString = encodedData.map(item => `${item.value}:${item.count}`).join(',');
+
+        return encodedString;
+    }
+
 
     entropyEncode(imageData) {
         // Dans un scénario réel, cette méthode implémenterait un algorithme de codage entropique comme Huffman ou arithmétique.
