@@ -193,7 +193,8 @@ async function WEBM(inputPath) {
     const outputPath = path.join(__dirname, 'videos', filename);
     // Fetch the MP4 video from the URL
     console.log('Video downloaded successfully:', video);
-    const dimensions = await getDimensions('video.mp4');
+    const dimensions = await getDimensions(video);
+    const dimensions2 = await getDimensions(outputPath);
 
     return new Promise((resolve, reject) => {
 
@@ -212,15 +213,16 @@ async function WEBM(inputPath) {
                     resolve({ // Resolve the promise with the result
                         "videoUrl": `/videos/${filename}`,
                         "entryData": {
+
                             "weight": fs.statSync(video).size / 1024,
-                            "width":video.videoWidth,
-                            "height": video.videoHeight,
-                            "format": ""
+                            "width":dimensions.width,
+                            "height": dimensions.height,
+                            "format": video.format
                         },
                     "compressedData": {
                         "weight": fs.statSync(outputPath).size / 1024,
-                        "width":0,
-                        "height":0,
+                        "width":dimensions2.width,
+                        "height":dimensions2.height,
                         "format": "webm"
                         }
 
