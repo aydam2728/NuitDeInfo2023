@@ -5,7 +5,6 @@ const fs = require('fs');
 const path = require('path');
 const ffmpeg = require('fluent-ffmpeg');
 const {Axios} = require("axios");
-import getDimensions from 'get-video-dimensions';
 
 
 const app = express();
@@ -193,8 +192,6 @@ async function WEBM(inputPath) {
     const outputPath = path.join(__dirname, 'videos', filename);
     // Fetch the MP4 video from the URL
     console.log('Video downloaded successfully:', video);
-    const dimensions = await getDimensions(video);
-    const dimensions2 = await getDimensions(outputPath);
 
     return new Promise((resolve, reject) => {
 
@@ -208,21 +205,18 @@ async function WEBM(inputPath) {
                 .on('end', () => {
                     // get the metadata of the video
                     // Use the ffprobe method to get video information
-
-
                     resolve({ // Resolve the promise with the result
                         "videoUrl": `/videos/${filename}`,
                         "entryData": {
-
                             "weight": fs.statSync(video).size / 1024,
-                            "width":dimensions.width,
-                            "height": dimensions.height,
-                            "format": video.format
+                            "width":document.getElementById(video).width ,
+                            "height":document.getElementById(video).height,
+                            "format":''
                         },
                     "compressedData": {
                         "weight": fs.statSync(outputPath).size / 1024,
-                        "width":dimensions2.width,
-                        "height":dimensions2.height,
+                        "width":0,
+                        "height":0,
                         "format": "webm"
                         }
 
