@@ -11,7 +11,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 let filename = ''; // Declare filename in the outer scope
 const saveDirectory = path.join(__dirname, 'images'); // Directory to save the converted images
-
+let json = null;
 app.get('/convert', async (req, res) => {
     const imageUrl = req.query.url; // Get the URL of the image from the request
     console.log(imageUrl);
@@ -20,49 +20,59 @@ app.get('/convert', async (req, res) => {
 
     try {
         const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-        const response2 = await axios.get(imageUrl, { responseType: 'stream' });
         filename = "";
         if (response.status === 200) {
             let compressedJson = null;
             // wait for the conversion to finish
             if (format == "avif") {
                 compressedJson = await AVIF(response.data,maxWeight);
+                const imageBuffer = Buffer.from(response.data);
+                const imageWeight = imageBuffer.length / 1000;
+                const image = await sharp(imageBuffer).metadata();
+                const imageUrl = `http://localhost:3000/images/${filename}`; // URL of the saved image
+                 json = {
+                    "imageUrl": imageUrl,
+                    "entryData":{
+                        "weight": imageWeight,
+                        "width": image.width,
+                        "height": image.height,
+                        "format": image.format,
+                    },
+                    "compressedData": compressedJson,
+                };
             }
             else if (format == "webp") {
                 compressedJson = await WEBP(response.data,maxWeight);
+                const imageBuffer = Buffer.from(response.data);
+                const imageWeight = imageBuffer.length / 1000;
+                const image = await sharp(imageBuffer).metadata();
+                const imageUrl = `http://localhost:3000/images/${filename}`; // URL of the saved image
+                 json = {
+                    "imageUrl": imageUrl,
+                    "entryData":{
+                        "weight": imageWeight,
+                        "width": image.width,
+                        "height": image.height,
+                        "format": image.format,
+                    },
+                    "compressedData": compressedJson,
+                };
             }else if(format == "webm"){
-                compressedJson = await WEBM(req.query.url);
+                json = await WEBM(req.query.url);
             }
             else {
                 res.status(500).send('Error during conversion.');
             }
 
 
-            const imageBuffer = Buffer.from(response.data);
-            const imageWeight = imageBuffer.length / 1000;
-            const image = await sharp(imageBuffer).metadata();
-
-
-            const imageUrl = `http://localhost:3000/images/${filename}`; // URL of the saved image
-
-            const json = {
-                "imageUrl": imageUrl,
-                "entryData":{
-                    "weight": imageWeight,
-                    "width": image.width,
-                    "height": image.height,
-                    "format": image.format,
-                },
-                "compressedData": compressedJson,
-            };
 
             res.send(json);
         } else {
             res.status(response.status).send('Unable to fetch the image from the URL.');
         }
     } catch (error) {
-        console.error(`Error during conversion: ${error.message}`);
-        res.status(500).send('Error during conversion.');
+        //console.error(`Error during conversion: ${error.message}`);
+        //res.status(500).send('Error during conversion.');
     }
 });
 
@@ -71,8 +81,9 @@ app.post('/compress-video', (req, res) => {
     // Renvoyez une réponse appropriée
 });
 
-app.use('/images', express.static(saveDirectory)); // Serve saved images from /images route
 
+app.use('/images', express.static(saveDirectory)); // Serve saved images from /images route
+app.use('/videos', express.static(path.join(__dirname, 'videos'))); // Serve saved videos from /videos route
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
@@ -191,14 +202,28 @@ async function WEBM(inputPath) {
                 .format('webm')
                 .save(outputPath)
                 .on('end', () => {
+                    // get the metadata of the video
+                    // Use the ffprobe method to get video information
+
+
+                    resolve({ // Resolve the promise with the result
+                        "videoUrl": `/videos/${filename}`,
+                        "entryData": {
+                            "weight": fs.statSync(video).size / 1024,
+                            "width":0,
+                            "height": 0,
+                            "format": ""
+                        },
+                    "compressedData": {
+                        "weight": fs.statSync(outputPath).size / 1024,
+                        "width":  0,
+                        "height":  0,
+                        "format": "webm"
+                        }
+
+                    });
                     // Delete the downloaded video
                     fs.unlinkSync(video);
-                    resolve({ // Resolve the promise with the result
-                        "weight": fs.statSync(outputPath).size / 1024,
-                        "width": 0,
-                        "height": 0,
-                        "format": "webm",
-                    });
                 })
                 .on('error', (err) => {
                 });
