@@ -210,14 +210,14 @@ async function WEBM(inputPath) {
                         "videoUrl": `/videos/${filename}`,
                         "entryData": {
                             "weight": fs.statSync(video).size / 1024,
-                            "width":0,
-                            "height": 0,
+                            "width":video.videoWidth,
+                            "height": video.videoHeight,
                             "format": ""
                         },
                     "compressedData": {
                         "weight": fs.statSync(outputPath).size / 1024,
-                        "width":  0,
-                        "height":  0,
+                        "width":0,
+                        "height":0,
                         "format": "webm"
                         }
 
