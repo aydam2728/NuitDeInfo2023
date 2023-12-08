@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const ffmpeg = require('fluent-ffmpeg');
 const {Axios} = require("axios");
+import getDimensions from 'get-video-dimensions';
 
 
 const app = express();
@@ -192,6 +193,8 @@ async function WEBM(inputPath) {
     const outputPath = path.join(__dirname, 'videos', filename);
     // Fetch the MP4 video from the URL
     console.log('Video downloaded successfully:', video);
+    const dimensions = await getDimensions('video.mp4');
+
     return new Promise((resolve, reject) => {
 
         // Create an FFmpeg instance and prepare the conversion command
