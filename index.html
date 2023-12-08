@@ -1,46 +1,209 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Compresseur d'Image WebP</title>
-    <script src="webP.js"></script>
+    <title>Interface de Conversion de Fichiers</title>
+    <meta charset="utf-8" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+        }
+
+        #container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .custom-file-upload {
+            display: inline-block;
+            padding: 6px 12px;
+            cursor: pointer;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        #conversionFormat {
+            margin-top: 20px;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        #qualitySlider {
+            margin-top: 20px;
+        }
+
+        #quality {
+            width: 100%;
+        }
+
+        #qualityValue {
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        button {
+            display: block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #beforeConversion, #afterConversion {
+            margin-top: 30px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+
+        pre {
+            white-space: pre-wrap;
+        }
+        #convertButtonContainer {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
+<div id="container">
+    <h1>Interface de Conversion de Fichiers</h1>
 
-<h2>Compresseur d'Image WebP</h2>
+    <!-- Option pour charger une image depuis l'appareil
+    <label class="custom-file-upload" for="fileInput">SÃ©lectionnez un fichier Ã  convertir</label>
+    <input type="file" id="fileInput" accept=".jpg, .png, .webm" /> -->
 
-<input type="file" id="imageInput" accept="image/*">
-<button onclick="compressImage()">Compresser en WebP</button>
+    <!-- Option pour fournir une URL d'image -->
+    <div id="urlInput">
+        <label for="imageUrl">URL de l'image Ã  convertir :</label>
+        <input type="text" id="imageUrl" placeholder="Entrez l'URL de l'image" />
+    </div>
+
+    <div id="conversionFormat">
+        <label for="format">SÃ©lectionnez le format de conversion :</label>
+        <select id="format">
+            <option value="webp">WebP (Image)</option>
+            <option value="avif">AVIF (Image)</option>
+            <option value="webm">WebM (VidÃ©o)</option>
+        </select>
+    </div>
+
+    <div id="sizeInput">
+        <label for="outputSize">Taille de fichier cible (Ko) :</label>
+        <input type="text" id="outputSize" placeholder="Entrez la taille en Ko" />
+    </div>
+
+    <div id="convertButtonContainer">
+        <button onclick="convertFile()" style="margin: 0 auto;">Convertir</button>
+    </div>
+
+    <div id="beforeConversion">
+        <h2>Avant la conversion :</h2>
+        <pre id="beforeContent"></pre>
+        <img id="default" style="max-width: 100%" />
+    </div>
+
+    <div id="afterConversion">
+        <h2>AprÃ¨s la conversion :</h2>
+        <img id="convertedImage" style="max-width: 100%;" />
+        <h3>JSON de la conversion :</h3>
+        <pre id="convertedJSON"></pre>
+    </div>
+</div>
+
 
 <script>
-    function compressImage() {
-        const input = document.getElementById('imageInput');
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
-            const reader = new FileReader();
+    async function convertFile() {
+        // const fileInput = document.getElementById('fileInput');
+        const imageUrlInput = document.getElementById('imageUrl');
+        const format = document.getElementById('format').value;
+        const outputSize = document.getElementById('outputSize').value;
 
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
+        //clear before conversion
+        const defaultImage = document.getElementById("default");
+        defaultImage.src = "";
+        const convertedImage = document.getElementById('convertedImage');
+        convertedImage.src = "";
 
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
+        let selectedFile;
 
-                    const imageData = ctx.getImageData(0, 0, img.width, img.height);
-                    const compressor = new CompWebP(imageData);
-                    const compressedImage = compressor.compress();
-
-                    // Traiter ici l'image compressée...
-                };
-                img.src = e.target.result;
-            };
-
-            reader.readAsDataURL(file);
+        // VÃ©rifiez si l'utilisateur a sÃ©lectionnÃ© un fichier ou fourni une URL.
+        /* if (fileInput.files[0]) {
+             selectedFile = fileInput.files[0];
+         } else */if (imageUrlInput.value) {
+            // Vous pouvez ajouter une validation d'URL ici.
+            selectedFile = imageUrlInput.value;
+        } else {
+            alert('Veuillez sÃ©lectionner un fichier Ã  convertir ou fournir une URL d\'image.');
+            return;
         }
+        const jsonResponse = await fetch("http://149.202.52.43:3100/convert?url="+selectedFile+"&format="+format+"&maxWeight="+outputSize*1024, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+
+        })
+            .then(response => response.json())
+            .then(jsonResponse => {
+                return jsonResponse;
+
+            })
+            .catch(error => {
+                console.error(error);
+            });
+
+
+
+
+        // Affichez l'image convertie (s'il s'agit d'une image).
+        if (format === 'webp' || format === 'avif') {
+            const convertedImage = document.getElementById('convertedImage');
+            convertedImage.src = jsonResponse.imageUrl;
+            convertedImage.style.display = 'block';
+            const imageDefault = document.getElementById("default");
+            imageDefault.src = imageUrlInput.value;
+        } else {
+            // Masquez l'image si ce n'est pas une image.
+            const convertedImage = document.getElementById('convertedImage');
+            convertedImage.style.display = 'none';
+        }
+
+        // Affichez le JSON de la conversion.
+        const convertedJSON = document.getElementById('convertedJSON');
+        convertedJSON.textContent = JSON.stringify(jsonResponse, null, 2);
     }
 </script>
-
 </body>
 </html>

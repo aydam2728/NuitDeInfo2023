@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const ffmpeg = require('fluent-ffmpeg');
 const {Axios} = require("axios");
-import getDimensions from 'get-video-dimensions';
+
 
 
 const app = express();
@@ -30,7 +30,7 @@ app.get('/convert', async (req, res) => {
                 const imageBuffer = Buffer.from(response.data);
                 const imageWeight = imageBuffer.length / 1000;
                 const image = await sharp(imageBuffer).metadata();
-                const imageUrl = `http://localhost:3000/images/${filename}`; // URL of the saved image
+                const imageUrl = `http://nuitdelinfo2023.alwaysdata.net/images/${filename}`; // URL of the saved image
                  json = {
                     "imageUrl": imageUrl,
                     "entryData":{
@@ -47,7 +47,7 @@ app.get('/convert', async (req, res) => {
                 const imageBuffer = Buffer.from(response.data);
                 const imageWeight = imageBuffer.length / 1000;
                 const image = await sharp(imageBuffer).metadata();
-                const imageUrl = `http://localhost:3000/images/${filename}`; // URL of the saved image
+                const imageUrl = `http://nuitdelinfo2023.alwaysdata.net/images/${filename}`; // URL of the saved image
                  json = {
                     "imageUrl": imageUrl,
                     "entryData":{
@@ -77,14 +77,14 @@ app.get('/convert', async (req, res) => {
     }
 });
 
-app.post('/compress-video', (req, res) => {
-    // Insérez ici la logique de compression vidéo en utilisant fluent-ffmpeg
-    // Renvoyez une réponse appropriée
-});
 
 
 app.use('/images', express.static(saveDirectory)); // Serve saved images from /images route
 app.use('/videos', express.static(path.join(__dirname, 'videos'))); // Serve saved videos from /videos route
+// add a route to the index page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
@@ -157,6 +157,7 @@ async function AVIF(imageBuffer,maxWeight) {
     }
     while ( width > 100 && webpWeight > maxWeight  ){
         width = width - 50;
+        console.log(width);
         webpBuffer = await sharp(imageBuffer)
             .resize({
                 fit: 'inside',
@@ -193,8 +194,7 @@ async function WEBM(inputPath) {
     const outputPath = path.join(__dirname, 'videos', filename);
     // Fetch the MP4 video from the URL
     console.log('Video downloaded successfully:', video);
-    const dimensions = await getDimensions(video);
-    const dimensions2 = await getDimensions(outputPath);
+
 
     return new Promise((resolve, reject) => {
 
@@ -211,18 +211,18 @@ async function WEBM(inputPath) {
 
 
                     resolve({ // Resolve the promise with the result
-                        "videoUrl": `/videos/${filename}`,
+                        "videoUrl": `http://nuitdelinfo2023.alwaysdata.net/videos/${filename}`,
                         "entryData": {
 
                             "weight": fs.statSync(video).size / 1024,
-                            "width":dimensions.width,
-                            "height": dimensions.height,
-                            "format": video.format
+                            "width":0,
+                            "height": 0,
+                            "format": inputPath.split('.').pop()
                         },
                     "compressedData": {
                         "weight": fs.statSync(outputPath).size / 1024,
-                        "width":dimensions2.width,
-                        "height":dimensions2.height,
+                        "width":0,
+                        "height":0,
                         "format": "webm"
                         }
 
